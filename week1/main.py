@@ -3,6 +3,7 @@ import sys
 
 import pandas as pd
 
+
 def load_data(path: str) -> pd.DataFrame:
     """
     기능1 - 데이터 불러오기
@@ -31,5 +32,38 @@ def load_data(path: str) -> pd.DataFrame:
     # 데이터 프레임 반환
     return df
 
+def explore_structure(df: pd.DataFrame) -> None:
+    """
+    기능2 - 데이터 구조 확인
+    불러온 DataFrame의 기본 구조를 파악합니다.
+    구현 요건:
+    - 전체 행 수와 열 수를 출력합니다
+    - 각 컬럼의 이름과 자료형을 출력합니다
+    - 상위 5행을 출력해 실제 데이터 형태를 확인합니다
+    - 각 출력 블록마다 구분석(=====)과 제목을 붙여 가독성 있게 표시합니다.
+    :param df: 구조를 확인하고자 하는 데이터프레임
+    :return:
+    """
+    # 행/열 수 출력
+    print("====================")
+    print("행/열 정보")
+    row, col = df.shape
+    print(f"%d행 x %d열" % (row, col))
+
+    # 컬럼명·자료형 목록 출력
+    print("====================")
+    print("컬럼명·자료형 목록")
+    columns = df.columns
+    dtypes = df.dtypes
+    for c in columns:
+        print(f"%s[%s]" % (c, dtypes[c]))
+
+    # 상위 5행 출력
+    print("====================")
+    print("상위 5행")
+    print(df.head(5))
+
+
 if __name__ == '__main__':
-    data = load_data("../data/tech_docs.csv")
+    df = load_data("../data/tech_docs.csv")
+    explore_structure(df)
