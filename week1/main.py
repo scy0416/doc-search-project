@@ -111,7 +111,7 @@ def show_category_distribution(df: pd.DataFrame) -> Dict[str, Dict[str, int | fl
 
     return result
 
-def check_missing(df: pd.DataFrame) -> Dict[str, str]:
+def check_missing(df: pd.DataFrame) -> Dict[str, Dict[str, int | float | str]]:
     """
     기능4 - 결측치 현황 파악
     각 컬럼에 결측치가 몇 개, 몇 %나 있는지 파악하고 심각도를 판단합니다
@@ -124,7 +124,7 @@ def check_missing(df: pd.DataFrame) -> Dict[str, str]:
     :param
         df: 분석하고자 하는 데이터프레임
     :return:
-        Dict[str, str]: 키는 컬럼명, 값은 심각도
+        Dict[str, Dict[str, int | float | str]]: 키는 컬럼명, 값은 결측치 수(missing_cnt), 결측치 비율(missing_ratio), 심각도(severity_level)
     """
     print("====================")
     print("컬럼 별 결측치")
