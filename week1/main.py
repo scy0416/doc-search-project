@@ -109,6 +109,8 @@ def show_category_distribution(df: pd.DataFrame) -> Dict[str, Dict[str, int | fl
     for c in category:
         print("%-10s평균 단어 수: %.4f" % (c, result[c]["words_mean"]))
 
+    return result
+
 def check_missing(df: pd.DataFrame) -> Dict[str, str]:
     """
     기능4 - 결측치 현황 파악
