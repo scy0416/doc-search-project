@@ -1,12 +1,16 @@
 import os
 import sys
 from typing import Dict
+from pathlib import Path
 
 import pandas as pd
 import numpy as np
 
 
-def load_data(path: str) -> pd.DataFrame:
+# 데이터 파일 경로 상수
+DATA_PATH = Path(__file__).parent.parent / "data" / "tech_docs.csv"
+
+def load_data(path: str | Path) -> pd.DataFrame:
     """
     기능1 - 데이터 불러오기
     pandas의 read_csv()로 CSV 파일을 불러와 DataFrame으로 반환합니다.
@@ -226,7 +230,8 @@ def numpy_doc_stats(df: pd.DataFrame) -> None:
 
 
 if __name__ == '__main__':
-    df = load_data("../data/tech_docs.csv")
+    #df = load_data("../data/tech_docs.csv")
+    df = load_data(DATA_PATH)
     explore_structure(df)
     show_category_distribution(df)
     check_missing(df)
