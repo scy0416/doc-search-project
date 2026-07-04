@@ -109,7 +109,63 @@ def show_category_distribution(df: pd.DataFrame) -> Dict[str, Dict[str, int | fl
     for c in category:
         print("%-10s평균 단어 수: %.4f" % (c, result[c]["words_mean"]))
 
+def check_missing(df: pd.DataFrame) -> Dict[str, str]:
+    """
+    기능4 - 결측치 현황 파악
+    각 컬럼에 결측치가 몇 개, 몇 %나 있는지 파악하고 심각도를 판단합니다
+    구현 요건:
+    - 컬럼별 결측치 수와 비율(%)을 계산합니다
+    - 결측치가 1개 이상인 컬럼만 출력합니다
+    - 결측치 비율을 기준으로 심각도를 구분해 출력합니다
+    - 결측치가 없는 컬럼 목록도 함께 출력합니다
+    - 결과를 딕셔너리로 반환합니다
+    :param
+        df: 분석하고자 하는 데이터프레임
+    :return:
+        Dict[str, str]: 키는 컬럼명, 값은 심각도
+    """
+    print("====================")
+    print("컬럼 별 결측치")
+
+    # 결측치 있는 컬럼의 정보를 담는 딕셔너리
+    missing = {}
+    columns = df.columns
+
+    # 결측치 측정
+    for c in columns:
+        # 결측치를 표시한 데이터프레임
+        c_missing = df[c].isnull()
+
+        # 결측치가 존재하는 경우
+        if c_missing.sum() > 0:
+            missing_cnt = c_missing.sum()       # 결측치 수
+            missing_ratio = c_missing.mean()    # 결측치 비율
+            if missing_ratio < 5:               # 심각도
+                severity_level = "낮음"
+            elif missing_ratio < 20:
+                severity_level = "주의"
+            else:
+                severity_level = "높음"
+
+            # 결측치 정보 삽입
+            missing[c] = {
+                "missing_cnt": missing_cnt,
+                "missing_ratio": missing_ratio,
+                "severity_level": severity_level
+            }
+
+    # 결측치 측정 결과 출력
+    if missing:     # 결측치가 존재하는 경우
+        for c in missing:
+            print("%-10s결측치: %d(%.2f%%) - [%s]" % (c, missing[c]["missing_cnt"], missing[c]["missing_ratio"], missing[c]["severity_level"]))
+    else:           # 결측치가 존재하지 않는 경우
+        print("결측치가 있는 컬럼: 없음")
+
+    return missing
+
+
 if __name__ == '__main__':
     df = load_data("../data/tech_docs.csv")
     explore_structure(df)
     show_category_distribution(df)
+    check_missing(df)
