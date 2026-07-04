@@ -3,6 +3,7 @@ import sys
 from typing import Dict
 
 import pandas as pd
+import numpy as np
 
 
 def load_data(path: str) -> pd.DataFrame:
@@ -124,7 +125,8 @@ def check_missing(df: pd.DataFrame) -> Dict[str, Dict[str, int | float | str]]:
     :param
         df: 분석하고자 하는 데이터프레임
     :return:
-        Dict[str, Dict[str, int | float | str]]: 키는 컬럼명, 값은 결측치 수(missing_cnt), 결측치 비율(missing_ratio), 심각도(severity_level)
+        Dict[str, Dict[str, int | float | str]]: 키는 컬럼명, 값은 결측치 수(missing_cnt), 결측치 비율(missing_ratio),
+            심각도(severity_level)
     """
     print("====================")
     print("컬럼 별 결측치")
@@ -159,11 +161,68 @@ def check_missing(df: pd.DataFrame) -> Dict[str, Dict[str, int | float | str]]:
     # 결측치 측정 결과 출력
     if missing:     # 결측치가 존재하는 경우
         for c in missing:
-            print("%-10s결측치: %d(%.2f%%) - [%s]" % (c, missing[c]["missing_cnt"], missing[c]["missing_ratio"], missing[c]["severity_level"]))
+            print("%-10s결측치: %d(%.2f%%) - [%s]"
+                  %(c, missing[c]["missing_cnt"], missing[c]["missing_ratio"], missing[c]["severity_level"]))
     else:           # 결측치가 존재하지 않는 경우
         print("결측치가 있는 컬럼: 없음")
 
     return missing
+
+def numpy_doc_stats(df: pd.DataFrame) -> None:
+    """
+    기능5 - NumPy로 문서 길이 통계량 계산
+    pandas의 .describe()와 별도로, NumPy 함수를 직접 사용해 문서 길이(단어 수)의 통계량을 계산합니다
+    구현 요건:
+    - content 컬럼의 각 행을 단어 수로 변환해 NumPy 배열을 만듭니다
+    - 결측치가 있는 행은 배열 생성 전에 제거합니다
+    - 아래 5가지 통계량을 NumPy 함수로 각각 계산합니다: 평균, 표준편차, 중앙값, 최솟값, 최댓값
+    - 조건 필터링으로 "50단어 미만 문서"를 찾아 출력합니다
+    pandas describe()로 계산한 결과와 수치를 비교해 일치하는지 확인하는 출력을 포함합니다
+    :param
+        df: 분석을 하고자 하는 데이터프레임
+    :return:
+    """
+    content_df = df["content"]
+    # 결측치가 존재하는 행 제거
+    content_df = content_df.dropna()
+    # 각 행을 단어수로 변환
+    content_df = content_df.map(lambda x: len(x.split()))
+    # 컬럼명을 words_cnt로 변경
+    content_df = content_df.rename("words_cnt")
+    # 단어수와 문서의 내용을 하나로 병합 - 이는 이후 조건 필터링에서 사용하기 위함
+    content_word_df = pd.concat([content_df, df["content"]], axis=1)
+
+    # NumPy 배열로 변환
+    content_np = np.array(content_word_df)
+
+    # NumPy 통계량 계산, 키 값은 pandas의 describe와 매칭하도록 설정
+    stats_np = {
+        "mean": np.mean(content_np[:,0]),
+        "std": np.std(content_np[:,0], ddof=1),
+        "50%": np.median(content_np[:,0]),
+        "min": np.min(content_np[:,0]),
+        "max": np.max(content_np[:,0]),
+    }
+
+    # 통계량 출력
+    print("평균:", stats_np["mean"])
+    print("표준편차:", stats_np["std"])
+    print("중앙값:", stats_np["50%"])
+    print("최솟값:", stats_np["min"])
+    print("최댓값:", stats_np["max"])
+
+    # 50단어 미만 문서 출력
+    under50 = content_np[content_np[:,0] < 50]
+    if under50.size > 0:
+        print("50단어 미만인 문서")
+        for words, content in under50:
+            print("[%d] - [%s]" % (words, content))
+
+    # pandas와 NumPy 비교 출력
+    pd_desc = content_df.describe()
+    for stat in stats_np:
+        print("%-10spandas: %.4f\tNumPy: %.4f\t결과: %s"
+              %("[%s]"%(stat), pd_desc[stat], stats_np[stat], "일치" if pd_desc[stat] == stats_np[stat] else "불일치"))
 
 
 if __name__ == '__main__':
@@ -171,3 +230,4 @@ if __name__ == '__main__':
     explore_structure(df)
     show_category_distribution(df)
     check_missing(df)
+    numpy_doc_stats(df)
