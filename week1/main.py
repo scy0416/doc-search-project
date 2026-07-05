@@ -228,11 +228,13 @@ def numpy_doc_stats(df: pd.DataFrame) -> None:
         print("%-10spandas: %.4f\tNumPy: %.4f\t결과: %s"
               %("[%s]"%(stat), pd_desc[stat], stats_np[stat], "일치" if pd_desc[stat] == stats_np[stat] else "불일치"))
 
-
-if __name__ == '__main__':
-    #df = load_data("../data/tech_docs.csv")
+def main() -> None:
     df = load_data(DATA_PATH)
     explore_structure(df)
     show_category_distribution(df)
     check_missing(df)
     numpy_doc_stats(df)
+
+
+if __name__ == '__main__':
+    main()
