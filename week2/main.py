@@ -2,6 +2,7 @@ import os
 import sys
 from typing import Dict
 from pathlib import Path
+import re
 
 import pandas as pd
 import numpy as np
@@ -227,6 +228,27 @@ def numpy_doc_stats(df: pd.DataFrame) -> None:
     for stat in stats_np:
         print("%-10spandas: %.4f\tNumPy: %.4f\t결과: %s"
               %("[%s]"%(stat), pd_desc[stat], stats_np[stat], "일치" if pd_desc[stat] == stats_np[stat] else "불일치"))
+
+def preprocess(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    검색 품질에 직접 영향을 주는 텍스트 정제 단계를 함수로 구현합니다.
+    대소문자·특수문자가 제각각이면 같은 단어도 다르게 취급되므로, 먼저 형태를 통일합니다.
+    :param
+        df: 전처리를 진행하고자 하는 데이터 프레임
+    :return:
+        pd.DataFrame: 전처리 완료된 컬럼이 추가된 데이터 프레임
+    """
+    # content 컬럼의 결측 행 제거
+    df = df.dropna(subset=["content"])
+
+    # 소문자 변환·특수문자 제거·중복 공백 정리를 한 번에 처리
+    df = df.assign(
+        content_clean=lambda df: df["content"].apply(
+            lambda x: re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", " ", x.lower())).strip()
+        )
+    )
+
+    return df
 
 def main() -> None:
     df = load_data(DATA_PATH)
