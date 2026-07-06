@@ -292,6 +292,10 @@ def build_tfidf(df: pd.DataFrame) -> Tuple[Any, TfidfVectorizer]:
     # 내용 벡터화
     vectorized = vectorizer.fit_transform(df["content"])
 
+    # 벡터 결과 크기 문서 수 x 단어 수
+    vectorized_shape = vectorized.shape
+    print("TF-IDF 행렬 크기: (%d, %d) | 사용된 단어 수: %d" % (vectorized_shape[0], vectorized_shape[1], vectorized_shape[1]))
+
     return vectorized, vectorizer
 
 def main() -> None:
