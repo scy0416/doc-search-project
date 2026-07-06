@@ -1,11 +1,13 @@
 import os
 import sys
-from typing import Dict
+from typing import Dict, Tuple, Any
 from pathlib import Path
 import re
 
 import pandas as pd
 import numpy as np
+import sklearn as sk
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 # 데이터 파일 경로 상수
@@ -277,6 +279,20 @@ def keyword_search(q: str, df: pd.DataFrame, top_k: int) -> pd.DataFrame:
             "score": df["content_clean"].apply(lambda x: len(set(q.lower().split()) & set(x.split())))
         }).sort_values("score", ascending=False).head(top_k)
     )
+
+def build_tfidf(df: pd.DataFrame) -> Tuple[Any, TfidfVectorizer]:
+    """
+    scikit-learn의 TfidfVectorizer로 전체 문서를 벡터 행렬로 변환합니다.
+    TF-IDF는 흔한 단어의 가중치를 낮추고 희귀하지만 중요한 단어의 가중치를 높입니다.
+    :param df: 벡터화 하고 싶은 데이터프레임
+    :return: 변환된 행렬과 벡터라이저 튜플
+    """
+    # 벡터라이저 초기화
+    vectorizer = TfidfVectorizer(max_features=5000, min_df=2, stop_words="english")
+    # 내용 벡터화
+    vectorized = vectorizer.fit_transform(df["content"])
+
+    return vectorized, vectorizer
 
 def main() -> None:
     df = load_data(DATA_PATH)
