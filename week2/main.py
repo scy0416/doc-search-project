@@ -260,6 +260,24 @@ def cosine_similarity_numpy(a: np.ndarray, b: np.ndarray) -> float:
     # (a · b) / (||a|| × ||b||)
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
+def keyword_search(q: str, df: pd.DataFrame, top_k: int) -> pd.DataFrame:
+    """
+    TF-IDF 없이, 질문 단어가 문서에 몇 개나 겹치는지만으로 접수를 매기는 단순 검색을 만듭니다. 이후 TF-IDF와 비교할 기준선(Baseline)이 됩니다.
+    :param q: 검색하고자 하는 질문
+    :param df: 문서가 들어있는 데이터프레임
+    :param top_k: 반환받을 문서의 최대 갯수
+    :return: top_k개의 유사도가 높은 문서 데이터프레임
+    """
+    return(
+        pd.DataFrame({
+            "doc_id": df["doc_id"],
+            "title": df["title"],
+            "category": df["category"],
+            # content_clean 컬럼을 대상으로 질문과 단어 대조
+            "score": df["content_clean"].apply(lambda x: len(set(q.lower().split()) & set(x.split())))
+        }).sort_values("score", ascending=False).head(top_k)
+    )
+
 def main() -> None:
     df = load_data(DATA_PATH)
     explore_structure(df)
