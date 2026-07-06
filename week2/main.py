@@ -250,6 +250,16 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
+def cosine_similarity_numpy(a: np.ndarray, b: np.ndarray) -> float:
+    """
+    두 벡터가 얼마나 비슷한 방향인지 재는 코사인 유사도를 라이브러리 없이 수식 그대로 구현합니다.
+    :param a: 계산 대상 벡터1
+    :param b: 계산 대상 벡터2
+    :return: 두 벡터의 코사인 유사도 결과
+    """
+    # (a · b) / (||a|| × ||b||)
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
 def main() -> None:
     df = load_data(DATA_PATH)
     explore_structure(df)
