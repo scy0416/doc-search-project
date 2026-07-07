@@ -148,3 +148,112 @@ pandas    평균 단어 수: 86.0000
 [max]     pandas: 97.0000	NumPy: 97.0000	결과: 일치
 ```
 ---
+# 2주차
+
+## 핵심 목표
+과제 1에서 준비한 문서를 숫자 벡터로 바꾸고, 두 텍스트가 얼마나 비슷한지 수치고 계산하는 방법을 직접 구현한다. 키워드 기반 Baseline을 먼저 만들고 TF-IDF로 발전시켜 두 방식의 차이를 체감한다
+## 구현 목표
+```text
+정제된 문서 준비 (전처리)
+    → 코사인 유사도 직접 구현 (NumPy)
+    → 키워드 기반 Baseline 검색
+    → TF-IDF 벡터화 (scikit-learn)
+    → TF-IDF 기반 Top-3 검색
+    → Baseline vs TF-IDF 결과 비교
+```
+
+## 구현 함수
+| 함수                          |                    입력                     |          출력          | 역할                         |
+|:----------------------------|:-----------------------------------------:|:--------------------:|:---------------------------|
+| `load_data()`               |             파일 경로(str\|Path)              |      DataFrame       | CSV 파일을 불러와 DataFrame 반환   |
+| `preprocess()`              |                 DataFrame                 |      DataFrame       | 소문자·특수문자·공백 정리  |
+| `cosine_similarity_numpy()` |             ndarray, ndarray              |        float         | 코사인 유사도 직접 계산 |
+| `keyword_search()`          |            str, DataFrame, int            |      DataFrame       | 단어 겹침 기반 Baseline 검색   |
+| `build_tfidf()`             |                 DataFrame                 | Any, TfidfVectorizer | TF-IDF 벡터 행렬 생성  |
+| `tfidf_search()`            | str, DataFrame, Any, TfidfVectorizer, int |      DataFrame       |        TF-IDF Top-k 검색                    |
+| `main()`                    |                   None                    |          없음          | 위 함수를 순서대로 호출              |
+
+- `preprocess()`가 str을 입력 받아서 str로 출력하는 것으로 적혀 있으나 확인한 결과 DataFrame을 입력 받고 처리한 후에 DataFrame의 형태로 출력하는 것으로 판단
+
+---
+## 파일 구조
+```text
+doc-search-project/
+│
+├── week1/
+│   └── main.py
+├── week2/
+│   └── main.py          # 벡터화·검색 코드 (필수)
+│
+└── data/
+    └── tech_docs.csv    #  과제 1 제공 (원본)
+```
+---
+# 기능 명세
+## 기능1 - 전처리 함수 (`preprocess`)
+검색 품질에 직접 영향을 주는 텍스트 정제 단계를 함수로 구현합니다. 대소문자·특수문자가 제각각이면 같은 단어도 다르게 취급되므로, 먼저 형태를 통일합니다.
+### 구현 요건:
+- 소문자로 변환합니다
+- 영문·숫자·공백만 남기고 특수문자를 제거합니다 (정규식 사용)
+- 중복 공백을 하나로 정리합니다
+- `content` 컬럼에 적용해 `content_clean` 컬럼을 새로 만듭니다
+- `content`에 결측치가 있으면 해당 행을 먼저 제거합니다 (제공된 데이터셋은 결측이 없어 그대로 진행됩니다)
+## 기능2 - 코사인 유사도 직접 구현 (`cosine_similarity_numpy`)
+두 벡터가 얼마다 비슷한 방향인지 재는 코사인 유사도를 라이브러리 없이 수식 그대로 구현합니다
+
+**코사인 유사도 공식:**
+```text
+유사도 = (A · B) / (||A|| × ||B||)
+```
+내적(A·B)이 클수록, 두 벡터의 방향이 비슷할수록 값이 1에 가까워집니다.
+### 구현 요건:
+- 내적과 두 벡터의 크기(노름)를 각각 구해 공식대로 계산합니다
+- `sklearn.metrics.pairwise` 등 라이브러리 함수 사용은 금지합니다 (직접 구현이 목표)
+- 벡터 크기가 0이면(영벡터) 0.0을 반환해 0으로 나누기를 방지합니다.
+## 기능3 - 키워드 기반 Baseline 검색 (`keyword_search`)
+TF-IDF 없이, 질문 단어가 문서에 몇 개나 겹치는지만으로 점수를 매기는 단순 검색을 만듭니다. 이후 TF-IDF와 비교할 기준선(Baseline)이 됩니다.
+### 구현 요건:
+- 질문을 전처리해 단어 집합으로 만듭니다.
+- 각 문서의 단어 집합과 교집합 크기(겹치는 단어 수)를 점수로 매깁니다
+- 점수가 높은 순으로 Top-k 문서를 반환합니다 (`doc_id`, `title`, `category`, `score`)
+## 기능4 - TF-IDF 벡터화 (`build_tfidf`)
+scikit-learn의 `TfidVectorizer`로 전체 문서를벡터 행렬로 변환합니다. TF-IDF는 흔한 단어의 가중치를 낮추고 희귀하지만 중요한 단어의 가중치를 높입니다.
+### 구현 요건:
+- `TfidfVectorizer`로 `content_clean` 전체를 행렬로 변환합니다
+- 행렬 크기(문서 수 x 단어 수)와 사용된 단어 수를 출력합ㄴ디ㅏ
+- 변환된 행렬과 vectorizer를 함께 반환합니다 (검색에서 재사용)
+## 기능5 - TF-IDF 기반 Top-k 검색 (`tfidf_search`)
+질문을 같은 TF-IDF 공간의 벡터로 바꾼 뒤, 모든 문서 벡터와 코사인 유사도(기능 2)를 계산해 사장 비슷한 Top-k를 반환합니다
+### 구현 요건:
+- 질문을 전처리한 뒤 vectorizer로 벡터화합니다
+- 모든 문서 벡터와 `cosine_similarity_numpy`로 유사도를 계산합니다
+- 유사도가 높은 순으로 Top-k를 반환합니다 (`doc_id`, `title`, `category`, `similarity`)
+## 기능6 - Baseline vs TF-IDF 비교 + main() 연결
+두 검색 방식을 같은 질문으로 실행해 결과를 나란히 비교하고, 전체를 `main()`에서 연결합니다
+### 구현 요건:
+- 기능 1~5를 `main()` 안에서 순서대로 호출합니다
+- 같은 질문 하나를 Baseline·TF-IDF로 각각 검색해 결과를 함께 출력합니다
+- 파일 경로는 상수로 선언해 관리하고, `if __name__ == "__main__":` 블록을 사용합니다
+- 두 방식의 결과 차이를 관찰하고 한두 줄 주석으로 정리합니다
+---
+# 예시 출력 결과
+```text
+데이터 로드 완료: 60행 x 5열
+전처리 완료: content_clean 컬럼 생성
+TF-IDF 행렬 크기: (60, 400) | 사용된 단어 수: 400
+
+질문: how does gradient descent work in machine learning
+
+=== Keyword Baseline ===
+   doc_id                               title category  score
+22   D023            What is Gradient Descent     AI기초      6
+15   D016           Git Commit Best Practices      Git      3
+23   D024  Loss Functions in Machine Learning     AI기초      3
+
+=== TF-IDF Search ===
+   doc_id                      title category  similarity
+22   D023   What is Gradient Descent     AI기초    0.436443
+29   D030  Backpropagation Algorithm     AI기초    0.141341
+18   D019       Git Stashing Changes      Git    0.127976
+```
+---
