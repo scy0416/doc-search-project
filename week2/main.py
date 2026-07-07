@@ -245,6 +245,9 @@ def cosine_similarity_numpy(a: np.ndarray, b: np.ndarray) -> float:
     :param b: 계산 대상 벡터2
     :return: 두 벡터의 코사인 유사도 결과
     """
+    # 계산 대상이 0벡터인 경우
+    if (a==0).all()  or (b==0).all():
+        return 0.0
     # (a · b) / (||a|| × ||b||)
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
