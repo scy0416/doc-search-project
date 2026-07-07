@@ -298,12 +298,40 @@ def build_tfidf(df: pd.DataFrame) -> Tuple[Any, TfidfVectorizer]:
 
     return vectorized, vectorizer
 
+def tfidf_search(q: str, df: pd.DataFrame, vectors: Any, vectorizer: TfidfVectorizer, top_k: int) -> pd.DataFrame:
+    """
+    질문을 같은 TF-IDF 공간의 벡터로 바꾼 뒤, 모든 문서 벡터와 코사인 유사도(기능 2)를 계산해 가장 비슷한 Top-k를 반환합니다.
+    :param q: 질문
+    :param df: 문서가 담긴 데이터프레임
+    :param vectors: 문서들의 벡터화 행렬
+    :param vectorizer: 벡터라이저
+    :param top_k: 반환 받을 상위 k가
+    :return: 유사도 높은 k개의 문서 데이터프레임
+    """
+    # 질문 전처리
+    clean_q = re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", " ", q.lower())).strip()
+    # 질문 벡터화
+    vectorized_q = vectorizer.transform([clean_q]).toarray()[0]
+
+    # 벡터 희소 행렬을 풀어서 새로운 컬럼에 추가 - 아래의 주석 코드는 동일한 효과를 내는 다른 방법들
+    df["vectorize"] = list(vectors.toarray())
+    #df["vectorize"] = vectors.toarray().tolist()
+    #df["vectorize"] = [row for row in vectors.toarray()]
+
+    # 코사인 유사도 검사 및 점수 정렬
+    return df.assign(
+        score=df["vectorize"].apply(lambda x: cosine_similarity_numpy(vectorized_q, x))
+    ).sort_values("score", ascending=False).head(top_k)
+
 def main() -> None:
     df = load_data(DATA_PATH)
-    explore_structure(df)
-    show_category_distribution(df)
-    check_missing(df)
-    numpy_doc_stats(df)
+    # explore_structure(df)
+    # show_category_distribution(df)
+    # check_missing(df)
+    # numpy_doc_stats(df)
+    cleaned_df = preprocess(df)
+    vectorized, vectorizer = build_tfidf(cleaned_df)
+    tfidf_search("python list comprehension", cleaned_df, vectorized, vectorizer, 10)
 
 
 if __name__ == '__main__':
