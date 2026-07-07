@@ -326,11 +326,13 @@ def tfidf_search(q: str, df: pd.DataFrame, vectors: Any, vectorizer: TfidfVector
 def main() -> None:
     df = load_data(DATA_PATH)
     cleaned_df = preprocess(df)                                             # 기능1 전처리
+    if "content_clean" in cleaned_df.columns:
+        print("전처리 완료: content_clean 컬럼 생성")
                                                                             # 기능2 코사인 유사도라 제외
     question = "how does gradient descent work in machine learning"
     keyword_search_result = keyword_search(question, cleaned_df, top_k=3)   # 기능3 키워드 검색
     vectorized, vectorizer = build_tfidf(cleaned_df)                        # 기능4 벡터화
-    tfidf_search(question, cleaned_df, vectorized, vectorizer, top_k=3)              # 기능5 벡터 검색
+    tfidf_search(question, cleaned_df, vectorized, vectorizer, top_k=3)     # 기능5 벡터 검색
 
 
 if __name__ == '__main__':
