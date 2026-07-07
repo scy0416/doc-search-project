@@ -315,8 +315,8 @@ def tfidf_search(q: str, df: pd.DataFrame, vectors: Any, vectorizer: TfidfVector
 
     # 코사인 유사도 검사 및 점수 정렬
     return df.assign(
-        score=df["vectorize"].apply(lambda x: cosine_similarity_numpy(vectorized_q, x))
-    ).sort_values("score", ascending=False).head(top_k)
+        similarity=df["vectorize"].apply(lambda x: cosine_similarity_numpy(vectorized_q, x))
+    ).sort_values("similarity", ascending=False).head(top_k)
 
 def main() -> None:
     df = load_data(DATA_PATH)
@@ -327,7 +327,14 @@ def main() -> None:
     question = "how does gradient descent work in machine learning"
     keyword_search_result = keyword_search(question, cleaned_df, top_k=3)   # 기능3 키워드 검색
     vectorized, vectorizer = build_tfidf(cleaned_df)                        # 기능4 벡터화
-    tfidf_search(question, cleaned_df, vectorized, vectorizer, top_k=3)     # 기능5 벡터 검색
+    tfidf_search_result = tfidf_search(question, cleaned_df, vectorized, vectorizer, top_k=3)     # 기능5 벡터 검색
+
+    print("\n질문:", question)
+
+    print("\n=== Keyword Baseline ===")
+    print(keyword_search_result[["doc_id", "title", "category", "score"]])
+    print("\n=== TF-IDF Search ===")
+    print(tfidf_search_result[["doc_id", "title", "category", "similarity"]])
 
 
 if __name__ == '__main__':
