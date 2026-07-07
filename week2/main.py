@@ -240,17 +240,12 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
     :return:
         pd.DataFrame: 전처리 완료된 컬럼이 추가된 데이터 프레임
     """
-    # content 컬럼의 결측 행 제거
-    df = df.dropna(subset=["content"])
-
-    # 소문자 변환·특수문자 제거·중복 공백 정리를 한 번에 처리
-    df = df.assign(
+    # content 컬럼의 결측 행 제거 후 소문자 변환·특수문자 제거·중복 공백 정리를 한 번에 처리
+    return df.dropna(subset=["content"]).assign(
         content_clean=lambda df: df["content"].apply(
             lambda x: re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", " ", x.lower())).strip()
         )
     )
-
-    return df
 
 def cosine_similarity_numpy(a: np.ndarray, b: np.ndarray) -> float:
     """
