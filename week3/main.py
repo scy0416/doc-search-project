@@ -317,8 +317,159 @@ def tfidf_search(q: str, df: pd.DataFrame, vectors: Any, vectorizer: TfidfVector
 
 def main() -> None:
     df = load_data(DATA_PATH)
-    cleaned_df = preprocess(df)                                             # 기능1 전처리
-    vectorized, vectorizer = build_tfidf(cleaned_df)                        # 기능4 벡터화
+    cleaned_df = preprocess(df)                         # 전처리
+    vectorized, vectorizer = build_tfidf(cleaned_df)    # 벡터화
+
+    # 기능1(과제3) - 평가셋 구성
+    eval_set = [
+        {
+            "query": "How do iterators, generators, and comprehensions provide efficient ways to process data in Python?",
+            "relevant_doc_ids": [
+                "D006",
+                "D001",
+                "D059"
+            ]
+        },
+        {
+            "query": "What tools does Python provide for handling errors and managing resources safely?",
+            "relevant_doc_ids": [
+                "D005",
+                "D051"
+            ]
+        },
+        {
+            "query": "How can you write flexible, reusable functions in Python using arguments, defaults, and lambdas?",
+            "relevant_doc_ids": [
+                "D003",
+                "D009"
+            ]
+        },
+        {
+            "query": "How do type hints and decorators help improve code readability and maintainability in Python?",
+            "relevant_doc_ids": [
+                "D052",
+                "D010"
+            ]
+        },
+        {
+            "query": "What are the different strategies for integrating changes from one branch into another in Git?",
+            "relevant_doc_ids": [
+                "D014",
+                "D015",
+                "D053"
+            ]
+        },
+        {
+            "query": "How do you inspect and manage the history of a Git repository?",
+            "relevant_doc_ids": [
+                "D021",
+                "D022"
+            ]
+        },
+        {
+            "query": "What tools does Git provide for temporarily setting aside work and debugging issues?",
+            "relevant_doc_ids": [
+                "D019",
+                "D054"
+            ]
+        },
+        {
+            "query": "How do developers collaborate on code changes using pull requests and remote repositories in Git?",
+            "relevant_doc_ids": [
+                "D017",
+                "D020"
+            ]
+        },
+        {
+            "query": "What techniques help prevent overfitting in neural networks?",
+            "relevant_doc_ids": [
+                "D026",
+                "D027",
+                "D056"
+            ]
+        },
+        {
+            "query": "How is a neural network trained using gradient-based optimization?",
+            "relevant_doc_ids": [
+                "D023",
+                "D030"
+            ]
+        },
+        {
+            "query": "What is the role of activation functions and batch normalization in deep learning?",
+            "relevant_doc_ids": [
+                "D025",
+                "D055"
+            ]
+        },
+        {
+            "query": "How do you evaluate a machine learning model's performance and understand the sources of its errors?",
+            "relevant_doc_ids": [
+                "D024",
+                "D028",
+                "D029"
+            ]
+        },
+        {
+            "query": "What are the different ways to select and filter elements from a NumPy array?",
+            "relevant_doc_ids": [
+                "D033",
+                "D039",
+                "D057"
+            ]
+        },
+        {
+            "query": "How does NumPy enable efficient array creation and random number generation?",
+            "relevant_doc_ids": [
+                "D032",
+                "D038"
+            ]
+        },
+        {
+            "query": "How can you combine, reshape, or split NumPy arrays?",
+            "relevant_doc_ids": [
+                "D037",
+                "D041"
+            ]
+        },
+        {
+            "query": "What features make NumPy operations faster than equivalent Python loops?",
+            "relevant_doc_ids": [
+                "D034",
+                "D040"
+            ]
+        },
+        {
+            "query": "How do you clean and prepare messy data using pandas?",
+            "relevant_doc_ids": [
+                "D043",
+                "D049"
+            ]
+        },
+        {
+            "query": "What methods does pandas provide for combining and summarizing datasets?",
+            "relevant_doc_ids": [
+                "D044",
+                "D045",
+                "D058"
+            ]
+        },
+        {
+            "query": "How do you access and transform data in a pandas DataFrame using indexing and function-application methods?",
+            "relevant_doc_ids": [
+                "D046",
+                "D047"
+            ]
+        },
+        {
+            "query": "How does pandas support reading and writing files as well as working with time-indexed data?",
+            "relevant_doc_ids": [
+                "D048",
+                "D050"
+            ]
+        }
+    ]
+    print("평가셋 크기: %d개 질문" % (len(eval_set)))
 
 
 if __name__ == '__main__':
