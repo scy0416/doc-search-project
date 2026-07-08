@@ -374,6 +374,27 @@ def run_evaluation(eval_set: List[Dict], search_func: Callable[[str, int], pd.Da
         "mrr_mean": np.mean(mmr_result)
     }
 
+def analyze_failures(eval_set: List[Dict], search_func: Callable[[str, int], pd.DataFrame], k: int) -> None:
+    """
+    기능5(3주차) - 실패 케이스 분석 (analyze_failures)
+    정답을 Top-k 안에서 찾지 못한 질문을 골라 출력해, 왜 못 찾았는지 눈으로 확인합니다.
+    :param eval_set: 평가셋
+    :param search_func: 검색 함수
+    :param k: 대상 개수
+    :return:
+    """
+    # 각 평가셋 순회
+    for e in eval_set:
+        # 검색 결과의 id 추출
+        result_ids = search_func(e["query"], k)["doc_id"]
+        # mmr 점수 평가
+        mmr_result = reciprocal_rank(result_ids=result_ids, answer=e, k=k)
+        # 검색 결과에 정답이 없는 경우
+        if mmr_result == 0:
+            print("질문: %s" % (e["query"]))
+            print("  정답 doc_id :", e["relevant_doc_ids"])
+            print("  검색 결과   :", result_ids.to_list())
+
 def main() -> None:
     df = load_data(DATA_PATH)
     cleaned_df = preprocess(df)                         # 전처리
