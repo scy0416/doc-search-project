@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Dict, Tuple, Any
+from typing import Dict, Tuple, Any, List, Callable
 from pathlib import Path
 import re
 
@@ -315,38 +315,64 @@ def tfidf_search(q: str, df: pd.DataFrame, vectors: Any, vectorizer: TfidfVector
         similarity=df["vectorize"].apply(lambda x: cosine_similarity_numpy(vectorized_q, x))
     ).sort_values("similarity", ascending=False).head(top_k)
 
-def precision_at_k(result: pd.DataFrame, answer: Dict, k) -> float:
+def precision_at_k(result_ids: pd.DataFrame, answer: Dict, k) -> float:
     """
     기능2(3주차) - Precision@k
     상위 k개 검색 결과 중 정답이 몇 개인지 비율로 계산합니다.
-    :param result: 검색 결과 대상 데이터프레임
+    :param result_ids: 검색 결과 대상의 id 데이터프레임
     :param answer: 정답 딕셔너리
     :param k: 확인 비율 k
     :return: 검색 결과 Top-k 중 정답 비율
     """
-    result_ids = result["doc_id"].head(k)   # 검색 결과의 id들
+    result_ids = result_ids.head(k)   # 검색 결과의 id들
     answer_ids = answer["relevant_doc_ids"] # 정답의 id들
 
     # 검색 결과 중 정답 비율
     return len(set(result_ids) & set(answer_ids)) / k
 
-def reciprocal_rank(result: pd.DataFrame, answer: Dict, k: int) -> float:
+def reciprocal_rank(result_ids: pd.DataFrame, answer: Dict, k: int) -> float:
     """
     기능3(3주차) - reciprocal_rank
     첫 번째 정답이 몇 번째 순위에 처음 등장했는지의 역수를 계산합니다
-    :param result: 검색 결과 대상 데이터프레임
+    :param result_ids: 검색 결과 대상의 id 데이터프레임
     :param answer: 정답 딕셔너리
     :param k: 확인 개수 k
     :return: 정답 등장 순서의 역수
     """
     answer_ids = answer["relevant_doc_ids"]     # 정답의 id들
-    result_target = result["doc_id"].head(k)    # 검사 대상 검색 결과 k개
+    result_target = result_ids.head(k)          # 검사 대상 검색 결과 k개
     for i, r in enumerate(result_target, start=1):
         # 정답이 등장한 경우
         if r in answer_ids:
             return 1/i
     # 정답이 없는 경우
     return 0
+
+def run_evaluation(eval_set: List[Dict], search_func: Callable[[str, int], pd.DataFrame], k: int) -> Dict[str, float]:
+    """
+    기능4(3주차) - Baseline vs TF-IDF 성능 비교 (run_evaluation)
+    평가셋 전체를 돌며 Precision@k와 MRR의 평균을 계산하고, 두 검색 방식을 비교합니다.
+    :param eval_set: 평가셋
+    :param search_func: 검색 함수
+    :param k: 대상 개수
+    :return: 결과 점수
+    """
+    precision_k_result = np.array([])
+    mmr_result = np.array([])
+    # 각 평가셋 순회
+    for e in eval_set:
+        # 검색 결과의 id 추출
+        result_ids = search_func(e["query"], k)["doc_id"]
+
+        # Precision@k 평가 및 추가
+        precision_k_result = np.append(precision_k_result, precision_at_k(result_ids=result_ids, answer=e, k=k))
+        # MMR 평가 및 추가
+        mmr_result = np.append(mmr_result, reciprocal_rank(result_ids=result_ids, answer=e, k=k))
+
+    return {
+        "precision_k_mean": np.mean(precision_k_result),
+        "mrr_mean": np.mean(mmr_result)
+    }
 
 def main() -> None:
     df = load_data(DATA_PATH)
