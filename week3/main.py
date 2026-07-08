@@ -550,6 +550,21 @@ def main() -> None:
         }
     ]
     print("평가셋 크기: %d개 질문" % (len(eval_set)))
+    print()
+
+    # 키워드 검색과 TF-IDF 검색 비교
+    keyword_perf = run_evaluation(eval_set, lambda q, top_k: keyword_search(q, cleaned_df, top_k), 3)
+    tfidf_perf = run_evaluation(eval_set, lambda q, top_k: tfidf_search(q, cleaned_df, vectorized, vectorizer, top_k), 3)
+
+    print("=== 성능 비교 ===")
+    print("%18s%11s%8s" % ("", "Precision@3", "MRR"))
+    print("%18s%11.4f%8.4f" % ("Keyword Baseline", keyword_perf["precision_k_mean"], keyword_perf["mrr_mean"]))
+    print("%18s%11.4f%8.4f" % ("TF-IDF", tfidf_perf["precision_k_mean"], tfidf_perf["mrr_mean"]))
+    print()
+
+    # 실패 케이스 출력
+    print("=== 실패 케이스 (Top-3 안에 정답 없음) ===")
+    analyze_failures(eval_set, lambda q, top_k: tfidf_search(q, cleaned_df, vectorized, vectorizer, top_k), 3)
 
 
 if __name__ == '__main__':
