@@ -317,7 +317,7 @@ def tfidf_search(q: str, df: pd.DataFrame, vectors: Any, vectorizer: TfidfVector
 
 def precision_at_k(result_ids: pd.DataFrame, answer: Dict, k) -> float:
     """
-    기능2(3주차) - Precision@k
+    기능2(3주차) - Precision@k 구현 (Precision_at_k)
     상위 k개 검색 결과 중 정답이 몇 개인지 비율로 계산합니다.
     :param result_ids: 검색 결과 대상의 id 데이터프레임
     :param answer: 정답 딕셔너리
@@ -332,7 +332,7 @@ def precision_at_k(result_ids: pd.DataFrame, answer: Dict, k) -> float:
 
 def reciprocal_rank(result_ids: pd.DataFrame, answer: Dict, k: int) -> float:
     """
-    기능3(3주차) - reciprocal_rank
+    기능3(3주차) - MRR 구현 (reciprocal_rank)
     첫 번째 정답이 몇 번째 순위에 처음 등장했는지의 역수를 계산합니다
     :param result_ids: 검색 결과 대상의 id 데이터프레임
     :param answer: 정답 딕셔너리
