@@ -315,6 +315,21 @@ def tfidf_search(q: str, df: pd.DataFrame, vectors: Any, vectorizer: TfidfVector
         similarity=df["vectorize"].apply(lambda x: cosine_similarity_numpy(vectorized_q, x))
     ).sort_values("similarity", ascending=False).head(top_k)
 
+def precision_at_k(result: pd.DataFrame, answer: Dict, k) -> float:
+    """
+    기능2(3주차) - Precision@k
+    상위 k개 검색 결과 중 정답이 몇 개인지 비율로 계산합니다.
+    :param result: 검색 결과 대상 데이터프레임
+    :param answer: 정답 덱셔너리
+    :param k: 확인 비율 k
+    :return: 검색 결과 Top-k 중 정답 비율
+    """
+    result_ids = result["doc_id"].head(k)   # 검색 결과의 id들
+    answer_ids = answer["relevant_doc_ids"] # 정답의 id들
+
+    # 검색 결과 중 정답 비율
+    return len(set(result_ids) & set(answer_ids)) / k
+
 def main() -> None:
     df = load_data(DATA_PATH)
     cleaned_df = preprocess(df)                         # 전처리
