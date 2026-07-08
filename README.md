@@ -257,3 +257,100 @@ TF-IDF 행렬 크기: (60, 400) | 사용된 단어 수: 400
 18   D019       Git Stashing Changes      Git    0.127976
 ```
 ---
+# 3주차
+
+## 핵심 목표
+과제 2에서 만든 검색기가 실제로 얼마나 잘 작동하는지 수치로 측정한다. 평가셋을 직접 만들고 Precision@k·MRR을 계산해 Baseline과 TF-IDF를 비교한 뒤, 잘못 검색된 케이스를 분석한다.
+## 구현 목표
+```text
+평가셋 구성 (질문 → 정답 문서 ID)
+    → Precision@k 계산
+    → MRR 계산
+    → Baseline vs TF-IDF 성능 비교
+    → 실패 케이스 분석 (정답을 못 찾은 질문)
+```
+
+## 구현 함수
+| 함수                   |         입력         |    출력     | 역할             |
+|:---------------------|:------------------:|:---------:|:---------------|
+| `precision_at_k()`   | 검색 결과 ID, 정답 ID, k | 비율(float) | 상위 k개 중 정답 비율  |
+| `reciprocal_rank()`  |  검색 결과 ID, 정답 ID   | 역수(float) | 첫 정답 순위의 역수    |
+| `run_evaluation()`   |    평가셋, 검색함수, k    |   Dict    | 평가셋 전체 평균 지표   |
+| `analyze_failures()` |    평가셋, 검색함수, k    |  없음(출력)   | 정답 못 찾은 케이스 출력 |
+| `main()`             |         없음         |    없음     | 위 함수를 순서대로 호출  |
+
+---
+## 파일 구조
+```text
+doc-search-project/
+│
+├── week1/main.py
+├── week2/main.py
+├── week3/
+│   └── main.py          # 평가·오류분석 코드 (필수)
+│
+└── data/
+    └── tech_docs.csv
+```
+---
+# 기능 명세
+## 기능1 - 평가셋 구성 (`eval_set`)
+질문과 그에 대한 정답 문서 ID를 직접 적성해 평가셋을 만듭니다. 최소 10개 이상 작성합니다.
+### 구현 요건:
+- 각 항목은 `query`(질문)와 `relevant_doc_ids`(정답 문서 ID 목록)로 구성합니다
+- 정답 문서 ID는 실제 데이터(`D001`~`D060`)에 존재하는 것으로 씁니다
+- 질문마다 정답이 1~3개가 되도록, 카테고리별로 고르게 구성합니다.
+## 기능2 - Precision@k 구현 (`precision_at_k`)
+"검색 결과 Top-k 중 정답 비율"입니다. 예를 들어 k=3인데 그 안에 정답이 2개면 2/3 ≈ 0.667
+### 구현 요건:
+- 검색 결과 상위 k개와 정답 목록의 교집합 크기를 구합니다
+- 교집합 크기를 k로 나눠 반환합니다
+## 기능3 - MRR 구현 (`reciprocal_rank`)
+첫 번째 정답이 몇 번째 순위에 처음 등장했는지의 역수를 계산합니다.
+
+**MRR(Mean Reciprocal Rank)이란:**
+
+첫 정답이 1위면 1/1=1.0, 2위면 1/2=0.5, 3위면 1/3≈0.333입니다. 정답이 Top-k 안에 없으면 0입니다. 평가섯 전체의 평균이 MRR입니다.
+### 구현 요건:
+- 검색 결과를 순서대로 보며 첫 정답의 순위를 찾습니다
+- 그 순위의 역수(1/순위)를 반환하고, 정답이 없으면 0.0을 반환합니다
+## 기능4 - Baseline vs TF-IDF 성능 비교 (`run_evaluation`)
+평가셋 전체를 돌며 Precision@k와 MRR의 평균을 계산하고, 두 검색 방식을 비교합니다.
+### 구현 요건:
+- 평가셋의 각 질문을 검색 함수에 넣어 결과 doc_id 목록을 얻습니다
+- 각 줄문의 Precision@k와 reciprocal_rank를 구해 평균을 냅니다
+- Baseline과 TF-IDF를 각각 평가해 표로 비교 출력합니다
+## 기능5 - 실패 케이스 분석 (`analyze_failures`)
+정답을 Top-k 안에서 찾지 못한 질문을 골라 출력해, 왜 못 찾았는지 눈으로 확인합니다.
+### 구현 요건:
+- 각 질문의 `reciprocal_rank`가 0인(정답이 Top-k에 없는) 케이스를 모읍니다
+- 실패한 질문, 정답 doc_id, 실제 검색 결과를 함께 출력합니다
+## 기능6 - main() 함수로 전체 연결
+과제 2 준비(로드·전처리·TF-IDF)를 재사용하고, 위 평가 함수를 순서대로 호출하는 `main()`을 작성합니다.
+### 구현 요건:
+- `load_data` -> 전처리 -> `build_tfidf`로 검색 준비를 갖춥니다 (과제 2 재사용)
+- 평가셋을 정의하고 `run_evaluation`으로 두 방식을 비교합니다
+- `analyze_failures`로 TF-IDF 실패 케이스를 출력합니다
+- `if __name__ == "__main__":` 블록을 사용합니다.
+---
+# 예시 출력 결과
+```text
+평가셋 크기: 20개 질문
+
+=== 성능 비교 ===
+                  Precision@3     MRR
+  Keyword Baseline     0.3667  0.6417
+            TF-IDF     0.4167  0.7167
+
+=== 실패 케이스 (Top-3 안에 정답 없음) ===
+질문: How do iterators, generators, and comprehensions provide efficient ways to process data in Python?
+  정답 doc_id : ['D006', 'D001', 'D059']
+  검색 결과   : ['D011', 'D060', 'D046']
+질문: What tools does Python provide for handling errors and managing resources safely?
+  정답 doc_id : ['D005', 'D051']
+  검색 결과   : ['D011', 'D049', 'D043']
+질문: How do you clean and prepare messy data using pandas?
+  정답 doc_id : ['D043', 'D049']
+  검색 결과   : ['D046', 'D048', 'D050']
+```
+---
