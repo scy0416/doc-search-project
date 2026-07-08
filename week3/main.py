@@ -318,23 +318,7 @@ def tfidf_search(q: str, df: pd.DataFrame, vectors: Any, vectorizer: TfidfVector
 def main() -> None:
     df = load_data(DATA_PATH)
     cleaned_df = preprocess(df)                                             # 기능1 전처리
-    if "content_clean" in cleaned_df.columns:
-        print("전처리 완료: content_clean 컬럼 생성")
-                                                                            # 기능2 코사인 유사도라 제외
-    question = "how does gradient descent work in machine learning"
-    keyword_search_result = keyword_search(question, cleaned_df, top_k=3)   # 기능3 키워드 검색
     vectorized, vectorizer = build_tfidf(cleaned_df)                        # 기능4 벡터화
-    tfidf_search_result = tfidf_search(question, cleaned_df, vectorized, vectorizer, top_k=3)     # 기능5 벡터 검색
-
-    print("\n질문:", question)
-
-    print("\n=== Keyword Baseline ===")
-    print(keyword_search_result[["doc_id", "title", "category", "score"]])
-    print("\n=== TF-IDF Search ===")
-    print(tfidf_search_result[["doc_id", "title", "category", "similarity"]])
-    # 두 검색 법의 차이점
-    # 두 방법 전부 1순위 결과는 같지만 2, 3순위 결과가 달랐다. 한 눈에 보기에 질문이 AI기초에 관련된 것인데, TF-IDF 검색 결과가
-    # 카테고리가 AI 기초인 결과가 더 우선순위가 높게 나온건 TF-IDF였고, 키워드는 명확하게 관련있는 것을 뽑아낸 것이라고 보기 힘들지 않나 싶다.
 
 
 if __name__ == '__main__':
