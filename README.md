@@ -354,3 +354,99 @@ doc-search-project/
   검색 결과   : ['D046', 'D048', 'D050']
 ```
 ---
+# 4주차
+
+## 핵심 목표
+과제 1~3의 모든 단계를 하나의 실행 가능한 파이프라인으로 통합한다. 문서 로드 -> 전처리 -> 벡터화 -> 검색 -> 평가가 `main.py` 하나로 이어지게 만든다. 선택적으로 전처리를 개선해 성능이 나아지는지 확인한다.
+## 구현 목표
+```text
+문서 불러오기 (tech_docs.csv)          — 과제 1
+    → 전처리 + TF-IDF 벡터화              — 과제 2
+    → 검색 (Baseline / TF-IDF)            — 과제 2
+    → 평가 (Precision@3 / MRR)            — 과제 3
+    → 실패 케이스 분석                     — 과제 3
+    → (선택) 전처리 개선 후 성능 재측정
+```
+
+## 사용 함수
+| 함수                                        |   출처    | 역할            |
+|:------------------------------------------|:-------:|:--------------|
+| `load_data()`                             |  과제 1   | CSV 불러오기      |
+| `preprocess()`                            |  과제 2   | 텍스트 정제        |
+| `cosine_similarity_numpy()`               |  과제 2   | 코사인 유사도       |
+| `keyword_search()` / `tfidf_search()`     |  과제 2   | 검색            |
+| `build_tfidf()`                           |  과제 2   | TF-IDF 벡터화    |
+| `precision_at_k()` / `reciprocal_rank()`  |  과제 3   | 평가 지표         |
+| `run_evaluation()` / `analyze_failures()` |  과제 3   | 평가·오류 분석      |
+| `main()`                                   | 과제 4 신규 | 위 함수를 순서대로 연결 |
+## 구현 함수
+| 함수                   |     입력      |     출력      | 역할                       |
+|:---------------------|:-----------:|:-----------:|:-------------------------|
+| `improve_content()`   | 개선 전 데이터프레임 | 개선 후 데이터프레임 | 제목을 전처리 한 후에 본문 앞에 3번 추가 |
+- 구현하는 함수는 요구사항에서 지정된 함수는 아니지만 기능 2(4주차)를 구현하는데 사용하기 위해서 구현하기로 했다.
+
+---
+## 파일 구조
+```text
+doc-search-project/
+│
+├── week1/main.py
+├── week2/main.py
+├── week3/main.py
+├── week4/
+│   └── main.py          # 통합 파이프라인 (필수)
+│
+└── data/
+    └── tech_docs.csv
+```
+---
+# 기능 명세
+## 기능1 - 전체 파이프라인 통합 (`main`)
+과제 1~3의 함수를 하나의 파일에 모으고, `main()`에서 로드 -> 벡터화 -> 검색 -> 평가 -> 오류분석 순으로 호출합니다.
+### 구현 요건:
+- `load_data`로 문서를 불러온 뒤 전처리하고 `build_tfidf`로 벡터화합니다
+- 예시 질문 하나로 `tfidf_search`를 실행해 검색이 동작하는지 확인합니다
+- 평가셋(과제 3에서 만든 것)으로 Baseline과 TF-IDF를 `run_evaluation`으로 비교합니다
+- `analyze_failures`로 TF-IDF 실패 케이스를 출력합니다
+- `if __name__ == "__main__":` 블록을 사용합니다
+## 기능2 (선택) - 전처리 개선 후 성능 재측정
+제목에는 문서의 핵심 주제가 담겨 있습니다. 제목을 본문에 여러 번 덧붙여 가중치를 높이면, 제목 단어가 질문과 겹칠 때 유사도가 올라갑니다.
+### 구현 요건:
+- 제목을 전처리해 `title_clean`을 만들고, 제목을 3회 반복해 본문 앞에 붙인 `content_weighted`를 만듭니다
+- `content_weighted`로 TF-IDF를 다시 만들어 성능을 재측정합니다
+- 기본 방식과 개선 방식의 Precision@3·MRR을 비교합니다
+---
+# 예시 출력 결과
+```text
+데이터 로드 완료: 60행 x 5열
+TF-IDF 행렬 크기: (60, 400) | 사용된 단어 수: 400
+
+=== 예시 검색: How do iterators, generators, and comprehensions provide efficient ways to process data in Python? ===
+   doc_id                                 title category  similarity
+10   D011           Python Virtual Environments   Python    0.146485
+59   D060  Convolutional Neural Networks Basics     AI기초    0.145760
+45   D046     pandas Indexing with loc and iloc   pandas    0.134525
+
+=== 성능 비교(개선 전) ===
+                  Precision@3     MRR
+  Keyword Baseline     0.3667  0.6417
+            TF-IDF     0.4167  0.7167
+
+TF-IDF 행렬 크기: (60, 406) | 사용된 단어 수: 406
+=== 성능 비교(개선 후) ===
+                  Precision@3     MRR
+  Keyword Baseline     0.3667  0.5667
+            TF-IDF     0.4833  0.8500
+
+=== 실패 케이스 (TF-IDF) ===
+질문: How do iterators, generators, and comprehensions provide efficient ways to process data in Python?
+  정답 doc_id : ['D006', 'D001', 'D059']
+  검색 결과   : ['D011', 'D060', 'D046']
+질문: What tools does Python provide for handling errors and managing resources safely?
+  정답 doc_id : ['D005', 'D051']
+  검색 결과   : ['D011', 'D049', 'D043']
+질문: How do you clean and prepare messy data using pandas?
+  정답 doc_id : ['D043', 'D049']
+  검색 결과   : ['D046', 'D048', 'D050']
+```
+---
