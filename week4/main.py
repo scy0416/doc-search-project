@@ -395,6 +395,26 @@ def analyze_failures(eval_set: List[Dict], search_func: Callable[[str, int], pd.
             print("  정답 doc_id :", e["relevant_doc_ids"])
             print("  검색 결과   :", result_ids.to_list())
 
+def improve_content(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    기능2(4주차) - 전처리 개선
+    본문에 전처리한 제목을 추가하는 과정을 진행하는 함수
+    :param df: 대상 데이터프레임
+    :return: 결과 데이터프레임
+    """
+    # 제목 전처리
+    tmp = df.assign(
+        title_clean=df["title"].apply(
+            lambda x: re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\s]", " ", x.lower()))
+        )
+    )
+    # 전처리 개선
+    return tmp.assign(
+        content_weighted=tmp[["content_clean", "title_clean"]].apply(
+            lambda x: (x["title_clean"] + " ") * 3 + x["content_clean"], axis=1
+        )
+    )
+
 def main() -> None:
     # [1] 로드
     df = load_data(DATA_PATH)
@@ -564,10 +584,38 @@ def main() -> None:
     keyword_perf = run_evaluation(eval_set, lambda q, top_k: keyword_search(q, cleaned_df, top_k), 3)
     tfidf_perf = run_evaluation(eval_set, lambda q, top_k: tfidf_search(q, cleaned_df, vectorized, vectorizer, top_k), 3)
 
-    print("=== 성능 비교 ===")
+    print("=== 성능 비교(개선 전) ===")
     print("%18s%11s%8s" % ("", "Precision@3", "MRR"))
     print("%18s%11.4f%8.4f" % ("Keyword Baseline", keyword_perf["precision_k_mean"], keyword_perf["mrr_mean"]))
     print("%18s%11.4f%8.4f" % ("TF-IDF", tfidf_perf["precision_k_mean"], tfidf_perf["mrr_mean"]))
+    print()
+
+    # 기능2(4주차)
+    # 전처리 개선
+    imp_df = improve_content(cleaned_df)
+
+    # 벡터화
+    imp_vectorized, imp_vectorizer = build_tfidf(pd.DataFrame({"content": imp_df["content_weighted"]}))
+
+    imp_keyword_perf = run_evaluation(
+        eval_set,
+        lambda q, top_k: keyword_search(
+            q, pd.DataFrame({
+                "doc_id": imp_df["doc_id"],
+                "title": imp_df["title"],
+                "category": imp_df["category"],
+                "content_clean": imp_df["content_weighted"],
+            }),
+            top_k
+        ),
+        3
+    )
+    imp_tfidf_perf = run_evaluation(eval_set, lambda q, top_k: tfidf_search(q, imp_df, imp_vectorized, imp_vectorizer, top_k), 3)
+
+    print("=== 성능 비교(개선 후) ===")
+    print("%18s%11s%8s" % ("", "Precision@3", "MRR"))
+    print("%18s%11.4f%8.4f" % ("Keyword Baseline", imp_keyword_perf["precision_k_mean"], imp_keyword_perf["mrr_mean"]))
+    print("%18s%11.4f%8.4f" % ("TF-IDF", imp_tfidf_perf["precision_k_mean"], imp_tfidf_perf["mrr_mean"]))
     print()
 
     # [5] 오류분석
