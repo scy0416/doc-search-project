@@ -396,11 +396,14 @@ def analyze_failures(eval_set: List[Dict], search_func: Callable[[str, int], pd.
             print("  검색 결과   :", result_ids.to_list())
 
 def main() -> None:
+    # [1] 로드
     df = load_data(DATA_PATH)
-    cleaned_df = preprocess(df)                         # 전처리
-    vectorized, vectorizer = build_tfidf(cleaned_df)    # 벡터화
 
-    # 기능1(과제3) - 평가셋 구성
+    # [2] 벡터화
+    cleaned_df = preprocess(df)
+    vectorized, vectorizer = build_tfidf(cleaned_df)
+
+    # 평가셋
     eval_set = [
         {
             "query": "How do iterators, generators, and comprehensions provide efficient ways to process data in Python?",
@@ -549,9 +552,14 @@ def main() -> None:
             ]
         }
     ]
-    print("평가셋 크기: %d개 질문" % (len(eval_set)))
+
+    # [3] 검색
+    print()
+    print("=== 예시 검색: %s ===" % (eval_set[0]["query"]))
+    print(tfidf_search(eval_set[0]["query"], cleaned_df, vectorized, vectorizer, 3)[["doc_id", "title", "category", "similarity"]])
     print()
 
+    # [4] 평가
     # 키워드 검색과 TF-IDF 검색 비교
     keyword_perf = run_evaluation(eval_set, lambda q, top_k: keyword_search(q, cleaned_df, top_k), 3)
     tfidf_perf = run_evaluation(eval_set, lambda q, top_k: tfidf_search(q, cleaned_df, vectorized, vectorizer, top_k), 3)
@@ -562,8 +570,8 @@ def main() -> None:
     print("%18s%11.4f%8.4f" % ("TF-IDF", tfidf_perf["precision_k_mean"], tfidf_perf["mrr_mean"]))
     print()
 
-    # 실패 케이스 출력
-    print("=== 실패 케이스 (Top-3 안에 정답 없음) ===")
+    # [5] 오류분석
+    print("=== 실패 케이스 (TF-IDF) ===")
     analyze_failures(eval_set, lambda q, top_k: tfidf_search(q, cleaned_df, vectorized, vectorizer, top_k), 3)
 
 
